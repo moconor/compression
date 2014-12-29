@@ -1,0 +1,238 @@
+README for hw4 
+
+Written by Connor Taylor and Matt O'Conor
+
+40image:
+
+Architecture:
+The main data structure used to store the image is a Pnm_ppm struct containing
+a UArray2 of Pnm_rgb pixels and a methods suite. Addtionally we utilize a 
+codeword abstraction that stores our scaled/packed integer values inside of 
+uint64_ts. 
+
+Interfaces: 
+Interfaces used in this program include mathfunctions.c which handles the RGB
+to component, Discrete Cosine Transform, as well as all of their inverse 
+calculations. codeword.c which is a client of Bitpack.c and abstracts away from
+the bitpacking that is performed within Bitpack.c. We also use readimage.c 
+which handles the reading and writing and compressed and decompressed images.
+
+Invariants: The invariant of our implementation is such that each 2x2 block of 
+RGB pixels will map one to one with a 32-bit codeword representation of the
+component video information contained within the block. The invariant of 
+mathfunctions.c is such that it has no knowledge of outside programs, it 
+simply takes in values and converts them. The invariant for codeword is such 
+that it can handle a codeword packing schema of any type. Because we utilized 
+constants for each values LSB, an alternate codeword schema could be utilized 
+by only changing the LSB constants for each value. readimage's invariant is 
+such that given a properly formatted Pnm_ppm or binary compressed image 
+readimage will take the output of 40image and then write it to the compressed 
+or decompressed image format, depending on the command line arguments. 
+
+Implementation:
+        Compress:
+We first read in an image file to a Pnm_ppm. We then go through the image 
+row by row and take each 2x2 block and call a series of math conversion 
+functions to set up the 5 scaled integer values that we need to represent the 
+component video information for each block. We then pass these values to our 
+codeword abstraction which uses bitpack.c to pack all of these values into a 
+32 bit codeword. Once the word is set we write it to stdout one byte at a time.
+        Decompress:
+We read a binary compressed image file and set up a blank Pnm_ppm for this 
+information to be written to. We map through this blank Pnm_ppm in row major
+fashion, writing a 2x2 block. We then utilize our codeword abstraction again to
+pull each of values we need out of the codeword. Once we have all of these 
+values for the 2x2 block. We utilize our inverse DCT and RGB trans functions to
+get individual pixel values for each element in the array. Once we have these 
+we write them to the blank Pnm_ppm and move on. 
+
+COMPILE: sh compile
+
+Help We Received:
+Ta's helped to debug a few errors we had and Shea Clark-Tieche helped 
+with reading and writing compressed codewords. We also used online resources on
+the comp40 website as well as stackoverflow. 
+
+APPROXIMATE #HOURS: ~30
+
+What has been correctly and incorrectly implemented: 
+We believe everything to have been implemented correctly for 40image and we 
+have no memory leaks to our knowledge. 
+
+CRITICAL PARTS OF DESIGN CHECKLIST:
+40IMAGE:
+
+1. In this assignment we will be compressing ppm images from RGB format
+to component video color space. Then we will be taking the compressed 
+image representation and decompressing it back into a RGB format.
+
+ 4. This problem can be broken down into a series of steps that are as follows:
+
+ We will read in a ppm image into UArray2 using the Pnm_ppm interface.
+
+ We will go through each 2 x 2 pixel block in the image and convert the 
+ RGB information to component video information.
+
+ We will take this component video info and store them inside codewords.
+
+ we will take these codewords and convert them to 32-bit codewords using
+ the bitpack interface.  
+
+ We will then write all of these codewords to stdout using big-endian 
+ format. 
+
+ 5. the data that are in each subproblem are as follows. 
+
+ A Pnm_ppm representing the uncompressed image 
+
+ The scaled component video representation of the RGB info. 
+
+ the 32 bit representation of each codeword after bitpack compression. 
+
+ 6. We will be reading the PPM image using a row major mapping function. 
+ Each 2x2 block of pixels will have a series of data conversion functions 
+ applied to them that will allow us to create codewords out of this data. 
+ Then the bitpack interface will be applied to each codeword in order to pack
+ the codewords into a 32- bit representation.   
+
+ 7. Two abstractions that will be using to solve this problem will be 
+ codewords and math conversion functions. We will write one implementation 
+ codeword.c that will handle the abstract representation of codewords. We will 
+ then use this interface in our larger 40image.c program. We will also write 
+ an implementation that handles all of the necessary math conversions from RGB 
+ format to video componenent coefficients. These coefficents will then be 
+ passed into our codeword abstraction. This codeword abstraction will 
+ then pass the individual coefficents to bitpack in order to store the codeword
+ in the specified 32-bit format.
+
+ 8. These can be found later in our submission. 
+
+ 9. When compressing and decompressing images, Each PPM image will be 
+ represented in a blocked array of block size 2. This UArray2b will map one to 
+ one with a parrallel array that stores abstracted codewords. These codewords 
+ in turn will map directly to their own 32-bit representation. This is the main 
+ invariant of our program in that each 2x2 block of pixels will always have a 
+ corresponding abstract codeword representation and a 32-bit representation. 
+In addition to this invariant the codeword abstraction will have the invariant
+of storing pointers to element structs that stores the individual members of 
+the codeword. The invariant of our math conversion implementation is that it 
+has no knowledge of outside client representations that use its interface. It 
+simply takes in numbers and spits back the corresponding number or coefficient.
+
+10. All of the algorithms that convert the relevant RGB information into video 
+component format and in turn the Discrete cosine transformations that convert
+this data into the relevant codeword coefficents as well as functions that
+perform the inverse operations to convert from video component to RGB
+will be used inside of our mathfunctions implementation. We will also be using
+a block-major mapping algorithm to read in our image. 
+
+
+11. The major components of our larger 40image.c program are codeword.c, 
+readimage.c, mathfuns.c, and bitpack.c. Their specific interfaces will be
+described in separate files. More generally, codeword.c will handle the 
+abstract representation of codewords. It will have functions that get and set 
+individual members of the codeword. the mathfuns.c implementation will 
+perform all of the necesarry conversion functions between RGB and video 
+compomonet format as well as their inverse for decompression. readimage.c will
+read and store the PPM image in the trimmed format as well as reading and 
+storing a binary compressed image. bitpack.c will handle the conversion from 
+float values for video component coefficients to their corresponding 
+bit-integer representation. 
+
+12. Our larger 40image.c program will be a client of readimage.c, it call its 
+relevant functions to read and store compressed and decompressed images inside
+of its interface. 40image.c will then take the stored image and pass its RGB 
+info into mathfuns.c. mathfuns.c will take this RGB info and convert their 
+values into the video component coefficient format as specified in the 
+assignment. These values will then be passed into codeword.c which will handle
+the abstract codeword representation. these codeword elements will then be
+passed into bitpack.c which will convert the floating point representation of
+these values into 32-bit codewords. We will process these codewords in sequence
+and pipe the output of of bitpack.c to stdout. 
+
+13. We will test our 40image.c program by utilizing a variety of PPM images 
+that have been formatted correctly and incorrectly. Once we have our compressor
+working we will then test our decompressor on the output of our compressor. 
+Each of the individual modules will have their own test cases which will be 
+outlined in their respective design documents. 
+
+14. Given the modularity of our program with each module handling a specific 
+function within the larger 40image.c. We would argue that our algorithm will 
+handle compression and decompression in a way that minimizes differences
+between the original uncompressed image and the decompressed result. We will 
+use our ppmdiff program that we wrote in lab in order to show this minimal 
+difference and we can look at filesizes after compression to show that the 
+compressed image is a significant amount smaller than the original PPM. 
+
+MATHFUNCTIONS.C 
+
+This module is trying to store a method suite of math functions that will
+be used throughout the 40image program by the main program itself and various
+modules. 
+
+It will offer these functions:
+
+float *DCT_trans(float y1, float y2, float y3, float y4, const char *VAL);
+ Will return an array holding the values of a discrete cosine transformation on
+the 4 y values passed. Each value will be stored in the array in the order that
+they are sent in.
+
+float DCT_inverse(float a, float b, float c, float d, const char *VAL);
+Will return the Y value of a reversed discrete cosine transformation on the 4
+values depending on the constant passed.   
+
+float comp_trans(Pnm_rgb pix,const char *VAL); Takes in a pixel and 
+outputs the Y, PB, or PR specified by VAL
+
+float *reverse_DC_comp(float avg, const char *ELEM); Returns an array of ints
+that has the color values of pixels 0,0 0,1 1,0 1,1 specified by ELEM. 
+
+int quantize(float value, const char *TYPE);
+takes in a float and returns the properly scaed integer value
+
+float rev_quantize(int index, const char *TYPE);
+takes in an int and returns the properly descaled float value. 
+
+We will test these functions by passing in very simple values and making sure
+that they spit out the right values.  We will also use more complex values and
+use wolfram alpha to make sure that the results that we get are correct.
+
+        CODEWORD::
+1. This module is trying to represent an abstracted codeword that has each 
+field set by bitpack.
+
+2. 
+uint64_t get_uvalue(uint64_t cword, const char *ITEM); 
+/* Gets a pointer to the value in cword.  Use one of the constants above to 
+ * access the elements. CRE to pass in a char * other than the ones listed
+ * above.
+ */
+int64_t get_svalue(uint64_t cwd, const char *ITEM);
+
+int get_width(const char *ITEM); /* Gets the width of ITEM */
+
+int get_lsb(const char *ITEM); 
+/* Gets the index of the least significant bit of ITEM in cword */
+
+uint64_t set_uvalue(uint64_t cwd, uint64_t val, const char *ITEM);
+/* Sets the value of the item at VAL to value. */ 
+
+uint64_t set_svalue(uint64_t cwd, int64_t val, const char *ITEM);
+
+uint64_t pack_bits(unsigned pb, unsigned pr, int *coeffs);
+
+
+4. We will represent this by using a uint64_t that will hold all the fields of 
+the codeword. The invariants will be that the codeword will always be storing
+sequences of bits that represent scaled integer values. 
+
+5. When the representation is correct, the user will be able to store values
+in this codeword that will hold the information about the format of the 
+codeword.  This will both hide the format from the user and make it easier
+to change the format if need be (which it will need to be)
+
+6. We will test this module by using the format that is given to us for the
+project.  We will make sure that each value is stored in the proper location
+by printing out the full codeword as well as trying to access its individual
+parts.  We will then try changing the format and making sure that it is 
+easy to change.

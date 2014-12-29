@@ -1,0 +1,52 @@
+/* readimage
+ * By: Connor Taylor and Matt O'Conor
+ */
+
+Read Image Module
+
+1.This module holds a bunch of functions that are used to read and write images 
+that are compressed/decompressed in the 40 image program.  The module will have
+these functions:
+
+Pnm_ppm ppmread(FILE *fp, A2Methods_T methods); Declared and defined in pnm.h,
+this function will take an image and store all the rgb values in a Pnm_ppm.
+
+void ppmwrite(FILE *fp, Pnm_ppm pixmap); Also in pnm.h, this file will write
+a Pnm_ppm out to fp as a ppm file.
+
+void compressed_write(FILE *fp, uint64_T word); This function will take a 
+codeword and print it out to fp
+
+int trim_dim(int dim, Pnm_ppm pixmap); Checks if the image dimension is an
+odd number and if so, trims it by one to make sure that it can store 2x2 
+blocks and returns the new dimension to be assigned
+
+UArray2b_T compressed_read(FILE *fp); Reads in a series of uint64_t words
+that represent a compressed images and stores them 1x1 blocks that will later
+be decompressed.
+
+This module will have some invariants.  The ppm image will always store the 
+pnm_rgb structs in 2x2 blocks and the codewords in 1x1 blocks. So the invariant
+of this program is such that each 2x2 block of the Pnm_ppm will map one-to-one
+with its corresponding codeword in a parrallel array. Also, trim_dim
+will never change the original height and width of the image, meaning that the
+user must use the return values to access the proper bounds. This is done to
+make sure that all memory is freed.  
+
+The proper way that this module should be used with 40image is:
+1. Read in the ppm/compressed image
+2. Trim both dimensions if necessary
+3. Compress/decompress image with other modules
+4. Print image
+
+Test cases will include a variety of Properly and poorly formatted PPM images 
+as well as a variety of properly and poorly formattted binary compressed 
+images. We will also test the readimage.c module on the output of our larger
+40image.c program so as to test that our decompressor works on the output of 
+our compressor and vice versa. 
+
+This module will use these c idioms:
+
+The idiom for memory allocation
+The idiom for using unboxed arrays
+The idiom for printing integers of known width

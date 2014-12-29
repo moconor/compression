@@ -1,0 +1,65 @@
+Codeword Module
+By: Connor Taylor and Matt O'Conor
+
+1. This module is trying to represent an abstraction codeword with a length 
+of 32 bytes that has data in it stored in a specific order
+
+2. This interface will have these functions:
+
+Codeword_T new_cword(int size); returns an empty, initialized codeword that has
+enough space for size bytes
+
+void *get_value(Codeword_T word, const char *TYPE); Takes in a constant string
+that codeword.c will know to use to access certain items.  Returns a pointer to
+the value.
+
+int get_width(Codeword_T cword, const char *ELEM); Gets the width (aka size) of
+the element that is accessed by string passed.  
+
+void set_value(void *val, const char *ELEM); Sets the value of the item
+located at ELEM. CRE to pass an item of the wrong size, URE to pass an item
+of the right size but wrong type.
+
+int get_lsb(Codeword_T codeword, const char *ELEM);  returns the lsb of the
+item indicated by ELEM
+
+3. Here are some examples of how to use these functions:
+
+*NOTE* PB is a predeclared constant, along with others, that the user will be
+able to see and use.
+
+Codeword_T test = new_cword(32); //returns a codeword that can hold 32 bits
+
+void * temp = get_cvalue(test, PB); //gets the PB value
+unsigned val = 4;
+unsigned *ptr = &val;
+set_cvalue(test, ptr, PB); // This is assuming that PB grabs a spot for a 
+                                unsigned
+int lsb = get_lsb(test, ptr, PB); //will return 4
+int width = get_cwidth(test, PB); // will return 4;
+
+4. We will represent this by using a Codeword_T struct that will hold a 
+UArray_T and the size of the codeword. The UArray will hold pointers to structs
+of type cword_elem, which will hold the elements size, value, and the location 
+of its LSB. The invariants will be that the codeword will always be storing
+pointers to the items in it, that it will not ever fit into the size that it
+has (it is an abstraction that we are going to use to assist with bitpack),
+and that all the constant values to access the items will be set and given
+to the user. 
+
+5. When the representation is correct, the user will be able to store values
+in this codeword that will hold the information about the format of the 
+codeword.  This will both hide the format from the user and make it easier
+to change the format if need be (which it will need to be)
+
+6. We will test this module by using the format that is given to us for the
+project.  We will make sure that each value is stored in the proper location
+by printing out the full codeword as well as trying to access its individual
+parts.  We will then try changing the format and making sure that it is 
+easy to change.
+
+7. We will need:
+
+The idiom for handling unboxed arrays
+The idiom for void * values of known types
+The idiom for allocating memory

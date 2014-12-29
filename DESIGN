@@ -1,0 +1,123 @@
+/* Design Document for ARITHMETIC and Image Compression
+ * Written by: Connor Taylor and Matt O'Conor
+ * Comp 40: Hw 4 Part 1 
+
+ Part 1:
+
+ 1. In this assignment we will be compressing ppm images from RGB format
+ to component video color space. Then we will be taking the compressed 
+ image representation and decompressing it back into a RGB format.
+
+ 2. Inputs that we will be using to help us solve this problem will be 
+ a variety of ppm images included in the /comp/40 directory as well as 
+ compressed images formatted into quantized codewords as outlined in 
+ project assignment. 
+
+ 3. A PPM image input will be converted into a compressed binary image output  
+ with the header as outlined in the project assignment followed by a sequence
+ of 32-bit codewords written in Big-Endian format. A Decompressed image input 
+ will be written in the format described above and will be converted to PPM 
+ image format which will be UArray2b of PGM_RGB structs. 
+
+ 4. This problem can be broken down into a series of steps that are as follows:
+
+ We will read in a ppm image into UArray2b using the Pnmrdr interface.
+
+ We will go through each 2 x 2 pixel block in the image and convert the 
+ RGB information to component video information.
+
+ We will take this component video info and store them inside codewords.
+
+ we will take these codewords and convert them to 32-bit codewords using
+ the bitpack interface.  
+
+ We will then write all of these codewords to stdout using big-endian 
+ format. 
+
+ 5. the data that are in each subproblem are as follows. 
+
+ A Pnm_ppm representing the uncompressed image 
+
+ A Uarray2 storing codewords which contain the component video info. 
+ Each of these codewords will map one-to-one to a 2x2 block. 
+
+ the 32 bit representation of each codeword after bitpack compression. 
+
+ 6. We will be reading the PPM image using a block row major mapping function. 
+ Each 2x2 block of pixels will have a series of data conversion functions 
+ applied to them that will allow us to create codewords out of this data. 
+ Then the bitpack interface will be applied to each codeword in order to pack
+ the codewords into a 32- bit representation.   
+
+ 7. Two abstractions that will be using to solve this problem will be 
+ codewords and math conversion functions. We will write one implementation 
+ codeword.c that will handle the abstract representation of codewords. We will 
+ then use this interface in our larger 40image.c program. We will also write 
+ an implementation that handles all of the necessary mathe conversions from RGB 
+ format to video componenent coefficients. These coefficents will then be 
+ stored in our codeword abstraction. Using this codeword abstraction we will 
+ then pass the individual coefficents to bitpack in order to store the codeword
+ in the specified 32-bit format. Each 32-bit codeword will be stored in the 
+ proper sequence inside of a parallel array that maps one-to-one with each 2x2
+ block of the original image. 
+
+ 8. These can be found in our submission in other text files. 
+
+ 9. When compressing and decompressing images, Each PPM image will be 
+ represented in a blocked array of block size 2. This UArray2b will map one to 
+ one with a parrallel array that stores abstracted codewords. These codewords 
+ in turn will map directly to their own 32-bit representation. This is the main 
+ invariant of our program in that each 2x2 block of pixels will always have a 
+ corresponding abstract codeword representation and a 32-bit representation. 
+In addition to this invariant the codeword abstraction will have the invariant
+of storing pointers to element structs that stores the individual members of 
+the codeword. The invariant of our math conversion implementation is that it 
+has no knowledge of outside client representations that use its interface. It 
+simply takes in numbers and spits back the corresponding number or coefficient.
+
+10. All of the algorithms that convert the relevant RGB information into video 
+component format and in turn the Discrete cosine transformations that convert
+this data into the relevant codeword coefficents as well as functions that
+perform the inverse operations to convert from video component to RGB
+will be used inside of our mathfunctions implementation. We will also be using
+a block-major mapping algorithm to read in our image. 
+
+
+11. The major components of our larger 40image.c program are codeword.c, 
+readimage.c, mathfuns.c, and bitpack.c. Their specific interfaces will be
+described in separate files. More generally, codeword.c will handle the 
+abstract representation of codewords. It will have functions that get and set 
+individual members of the codeword. the mathfuns.c implementation will 
+perform all of the necesarry conversion functions between RGB and video 
+compomonet format as well as their inverse for decompression. readimage.c will
+read and store the PPM image in the trimmed format as well as reading and 
+storing a binary compressed image. bitpack.c will handle the conversion from 
+float values for video component coefficients to their corresponding 
+bit-integer representation. 
+
+12. Our larger 40image.c program will be a client of readimage.c, it call its 
+relevant functions to read and store compressed and decompressed images inside
+of its interface. 40image.c will then take the stored image and pass its RGB 
+info into mathfuns.c. mathfuns.c will take this RGB info and convert their 
+values into the video component coefficient format as specified in the 
+assignment. These values will then be passed into codeword.c which will handle
+the abstract codeword representation. these codeword elements will then be
+passed into bitpack.c which will convert the floating point representation of
+these values into 32-bit codewords. We will process these codewords in sequence
+and pipe the output of of bitpack.c to stdout. 
+
+13. We will test our 40image.c program by utilizing a variety of PPM images 
+that have been formatted correctly and incorrectly. Once we have our compressor
+working we will then test our decompressor on the output of our compressor. 
+Each of the individual modules will have their own test cases which will be 
+outlined in their respective design documents. 
+
+14. Given the modularity of our program with each module handling a specific 
+function within the larger 40image.c. We would argue that our algorithm will 
+handle compression and decompression in a way that minimizes differences
+between the original uncompressed image and the decompressed result. We will 
+use our ppmdiff program that we wrote in lab in order to show this minimal 
+difference and we can look at filesizes after compression to show that the 
+compressed image is a significant amount smaller than the original PPM.       
+
+
